@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "Califnco Water Purifiers",
+    "slug": "califnco-water-purifiers",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "backgroundColor": "#0284c7"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.califnco.waterpurifiers",
+      "adaptiveIcon": {
+        "backgroundColor": "#0284c7"
+      },
+      "permissions": [
+        "INTERNET",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "POST_NOTIFICATIONS"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    }
+  }
+}

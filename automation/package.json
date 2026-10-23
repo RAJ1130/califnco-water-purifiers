@@ -1,0 +1,14 @@
+{
+  "name": "califnco-daily-ai-poster",
+  "version": "1.0.0",
+  "description": "Daily automated AI Instagram & WhatsApp status poster for Califnco water purifiers",
+  "main": "daily_ai_poster.js",
+  "scripts": {
+    "start": "node daily_ai_poster.js",
+    "test-run": "node daily_ai_poster.js --dry-run"
+  },
+  "dependencies": {
+    "@google/genai": "^0.1.1",
+    "dotenv": "^16.4.7"
+  }
+}

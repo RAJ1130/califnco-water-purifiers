@@ -1,0 +1,88 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.role == 'admin' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+    }
+    
+    function isApprovedDealer() {
+      return isAuthenticated() && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'dealer' &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.dealerStatus == 'approved'
+      );
+    }
+
+    // Products collection: Anyone can read, only admin can create/modify
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isAuthenticated() && (
+        (isOwner(userId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'dealerStatus'])) ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Orders collection
+    match /orders/{orderId} {
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || 
+        isAdmin()
+      );
+      allow create: if isAuthenticated() && (
+        request.resource.data.userId == request.auth.uid
+      );
+      allow update: if isAuthenticated() && (
+        isAdmin() || 
+        (resource.data.userId == request.auth.uid && request.resource.data.orderStatus == 'Cancelled')
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Service Requests collection
+    match /service_requests/{requestId} {
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || 
+        isAdmin()
+      );
+      allow create: if isAuthenticated() && (
+        request.resource.data.userId == request.auth.uid
+      );
+      allow update: if isAuthenticated() && (
+        isAdmin() || 
+        resource.data.userId == request.auth.uid
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Referral tracking
+    match /referrals/{referralId} {
+      allow read: if isAuthenticated() && (
+        resource.data.referrerId == request.auth.uid ||
+        resource.data.refereeId == request.auth.uid ||
+        isAdmin()
+      );
+      allow create: if isAuthenticated();
+      allow update: if isAdmin();
+    }
+  }
+}

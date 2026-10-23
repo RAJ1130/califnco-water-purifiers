@@ -1,0 +1,190 @@
+{
+  "name": "Califnco - Daily Automated AI Instagram & WhatsApp Poster",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Daily Schedule Trigger (9:00 AM)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pick daily product from catalog\nconst products = [\n  {\n    \"id\": \"pur-001\",\n    \"name\": \"Califnco HydroPure Elite RO+UV+UF+Copper\",\n    \"price\": 14999,\n    \"category\": \"purifiers\",\n    \"description\": \"Advanced 8-stage RO purifier with copper infusion technology and active mineral balance.\"\n  },\n  {\n    \"id\": \"pur-006\",\n    \"name\": \"Califnco Smart IoT RO with Mobile App Sync\",\n    \"price\": 21999,\n    \"category\": \"purifiers\",\n    \"description\": \"Smart WiFi-enabled RO purifier displaying real-time water purity, input/output TDS, and filter life.\"\n  },\n  {\n    \"id\": \"dis-001\",\n    \"name\": \"Califnco Commercial 3-Tap Floor RO Dispenser\",\n    \"price\": 29999,\n    \"category\": \"dispensers\",\n    \"description\": \"Heavy-duty 3-temperature floor standing dispenser with built-in 50 LPH RO purification.\"\n  }\n];\n\nconst dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);\nconst product = products[dayOfYear % products.length];\n\nreturn [{ json: { product } }];"
+      },
+      "name": "Select Daily Product",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        420,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gemini-2.5-flash",
+        "prompt": "=Write an engaging, high-conversion Instagram caption for this product:\nProduct: {{$json.product.name}}\nCategory: {{$json.product.category}}\nPrice: ₹{{$json.product.price}}\nDescription: {{$json.product.description}}\n\nInclude:\n- Catchy headline with emojis\n- Health & pure water benefits\n- Promo code: PURECALIFNCO10 for 10% off\n- 20 trending hashtags (#Califnco #WaterPurifier #ROFilter #HealthyLiving)"
+      },
+      "name": "Gemini AI - Generate Caption & Hashtags",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        640,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://image.pollinations.ai/prompt/commercial%20studio%20photography%20of%20Califnco%20water%20purifier%20on%20luxury%20kitchen%20counter%20crystal%20water%20splashes%20ultra-realistic%208k?width=1080&height=1080&nologo=true",
+        "responseFormat": "file"
+      },
+      "name": "AI Image Generation (Pollinations / Flux)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        640,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{$env.INSTAGRAM_ACCOUNT_ID}}/media",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "image_url",
+              "value": "=https://image.pollinations.ai/prompt/commercial%20studio%20photography%20of%20Califnco%20water%20purifier?width=1080&height=1080"
+            },
+            {
+              "name": "caption",
+              "value": "={{$node['Gemini AI - Generate Caption & Hashtags'].json.text}}"
+            },
+            {
+              "name": "access_token",
+              "value": "={{$env.META_ACCESS_TOKEN}}"
+            }
+          ]
+        }
+      },
+      "name": "Instagram Meta Graph API - Create Media",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        900,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{$env.INSTAGRAM_ACCOUNT_ID}}/media_publish",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "creation_id",
+              "value": "={{$json.id}}"
+            },
+            {
+              "name": "access_token",
+              "value": "={{$env.META_ACCESS_TOKEN}}"
+            }
+          ]
+        }
+      },
+      "name": "Instagram Meta Graph API - Publish Post",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1120,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3000/api/status/text",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"session\": \"default\",\n  \"text\": \"💧 Califnco Deal of the Day: \" + $node['Select Daily Product'].json.product.name + \"\\nSpecial Price: ₹\" + $node['Select Daily Product'].json.product.price + \"\\nUse Code: PURECALIFNCO10 for 10% off!\"\n}"
+      },
+      "name": "WAHA WhatsApp Status (Bonus +10 pts)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        900,
+        420
+      ]
+    }
+  ],
+  "connections": {
+    "Daily Schedule Trigger (9:00 AM)": {
+      "main": [
+        [
+          {
+            "node": "Select Daily Product",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Daily Product": {
+      "main": [
+        [
+          {
+            "node": "Gemini AI - Generate Caption & Hashtags",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AI Image Generation (Pollinations / Flux)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini AI - Generate Caption & Hashtags": {
+      "main": [
+        [
+          {
+            "node": "Instagram Meta Graph API - Create Media",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "WAHA WhatsApp Status (Bonus +10 pts)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram Meta Graph API - Create Media": {
+      "main": [
+        [
+          {
+            "node": "Instagram Meta Graph API - Publish Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
