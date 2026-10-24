@@ -1,0 +1,35 @@
+name: Daily AI Marketing Automation (Instagram & WhatsApp)
+
+on:
+  schedule:
+    # Runs automatically every day at 09:00 AM IST (03:30 AM UTC) without manual input
+    - cron: '30 3 * * *'
+  workflow_dispatch:
+    # Allows manual test run by recruiters/reviewers
+
+jobs:
+  run-daily-ai-poster:
+    name: Generate Daily AI Post & Publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Execute Daily AI Automation Runner
+        run: |
+          node automation/daily_ai_poster.js --dry-run > post_output.txt
+          cat post_output.txt
+
+      - name: Publish Workflow Summary
+        run: |
+          echo "## 💧 Califnco Daily AI Marketing Post (Automated)" >> $GITHUB_STEP_SUMMARY
+          echo "### 📅 Execution Date: $(date -u)" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat post_output.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
