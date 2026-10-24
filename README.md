@@ -132,3 +132,6 @@ node daily_ai_poster.js --dry-run
 | **Retail Customer** | Rajesh Sharma | `rajesh.sharma@example.com` | `+91 98450 12345` | Retail MRP prices, doorstep delivery, service booking, referral wallet |
 | **Wholesale Dealer** | Venkatesh Rao (*Aqua Solutions*) | `aquasolutions.dealer@example.com` | `+91 97411 88299` | 30%–45% wholesale pricing, bulk MOQ ordering, GST input invoicing |
 | **Super Admin** | Califnco Operations | `admin@califnco.com` | `+91 98000 00000` | Approve/reject dealers, order fulfillment, assign service technicians |
+"# califnco-water-purifiers" 
+#   c a l i f n c o - w a t e r - p u r i f i e r s  
+ 
