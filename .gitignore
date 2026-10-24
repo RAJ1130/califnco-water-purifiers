@@ -7,3 +7,8 @@ build/
 .DS_Store
 Thumbs.db
 serviceAccountKey.json
+.gradle/
+*.iml
+android/.gradle/
+android/app/build/
+android/build/

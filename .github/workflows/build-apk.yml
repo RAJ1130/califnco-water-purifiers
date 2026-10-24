@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    name: Build Android APK
+    name: Build Native Android APK
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -16,8 +16,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
-          cache-dependency-path: mobile-app/package.json
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -25,27 +23,29 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Dependencies
+      - name: Install Node Dependencies
         working-directory: ./mobile-app
         run: |
           npm install --legacy-peer-deps
 
-      - name: Build Web Production Assets
+      - name: Build Web Assets & Sync
         working-directory: ./mobile-app
         run: |
           npm run build
+          npx cap sync android
 
-      - name: Package Califnco Android Release Bundle
+      - name: Grant Execute Permission to Gradle
+        working-directory: ./mobile-app/android
+        run: chmod +x gradlew
+
+      - name: Build Android APK with Gradle
+        working-directory: ./mobile-app/android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Prepare APK for Artifact
         run: |
           mkdir -p release-apk
-          cd mobile-app/dist
-          zip -r ../../release-apk/califnco-water-purifiers-release.zip .
-          cd ../..
-          # Create standalone portable APK release bundle
-          cp release-apk/califnco-water-purifiers-release.zip release-apk/califnco-water-purifiers.apk
+          cp mobile-app/android/app/build/outputs/apk/debug/app-debug.apk release-apk/califnco-water-purifiers.apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
