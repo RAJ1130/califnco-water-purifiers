@@ -17,7 +17,7 @@ jobs:
         with:
           node-version: 20
 
-      - name: Setup Java
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
@@ -26,23 +26,26 @@ jobs:
       - name: Install Node Dependencies
         working-directory: ./mobile-app
         run: |
-          npm install --legacy-peer-deps
+          npm install --include=dev --legacy-peer-deps
 
-      - name: Build Web Assets & Sync
+      - name: Build Web Assets & Sync to Android
         working-directory: ./mobile-app
         run: |
-          npm run build
-          npx cap sync android
+          npx vite build
+          npx @capacitor/cli sync android
 
-      - name: Grant Execute Permission to Gradle
+      - name: Fix Line Endings and Permissions on Gradlew
         working-directory: ./mobile-app/android
-        run: chmod +x gradlew
+        run: |
+          sed -i -e 's/\r$//' gradlew
+          chmod +x gradlew
 
       - name: Build Android APK with Gradle
         working-directory: ./mobile-app/android
-        run: ./gradlew assembleDebug --no-daemon
+        run: |
+          ./gradlew assembleDebug --no-daemon
 
-      - name: Prepare APK for Artifact
+      - name: Prepare APK for Download
         run: |
           mkdir -p release-apk
           cp mobile-app/android/app/build/outputs/apk/debug/app-debug.apk release-apk/califnco-water-purifiers.apk
